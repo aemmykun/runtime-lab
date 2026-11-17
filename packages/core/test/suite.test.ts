@@ -3,6 +3,7 @@ import { createAdapter } from '../src/adapters.js';
 import { parseSuite, runSuite } from '../src/suite.js';
 import { DEFAULT_PRICE_TABLE } from '../src/prices.js';
 import { openaiText, scriptedFetch } from './helpers.js';
+import { parseToolDefinitions, runMock } from '../src/mockTools.js';
 
 const suiteJson = JSON.stringify({
   schema: 'runtime-lab/suite@1',
@@ -21,6 +22,33 @@ describe('suites', () => {
     expect(() => parseSuite(JSON.stringify({ name: 'x', tests: [{ name: 't', prompt: 'p', assertions: [{ type: 'bogus' }] }] }))).toThrow(
       /provider must be set[\s\S]*model must be set[\s\S]*"bogus" is not supported/,
     );
+  });
+
+  it('validates assertion payloads before running tests', () => {
+    for (const assertion of [
+      { type: 'regex' },
+      { type: 'contains' },
+      { type: 'max-cost', usd: '1' },
+      { type: 'json-schema', schema: [] },
+    ]) {
+      const invalid = { name: 'invalid', defaults: { provider: 'openai', model: 'm' }, tests: [{ name: 't', prompt: 'p', assertions: [assertion] }] };
+      expect(() => parseSuite(JSON.stringify(invalid))).toThrow(/assertions\[0\]/);
+    }
+  });
+
+  it('rejects malformed mock cases and missing results', () => {
+    const tool = (mock: unknown) => JSON.stringify([{ name: 'tool', parameters: { type: 'object' }, mock }]);
+    expect(parseToolDefinitions(tool({ type: 'match', cases: [{}] })).errors).toContain('tools[0].mock.cases[0].when must be an object');
+    expect(parseToolDefinitions(tool({ type: 'static' })).errors).toContain('tools[0].mock.result is required');
+    expect(parseToolDefinitions(tool({ type: 'match', cases: [{ when: {}, result: null }] })).errors).toEqual([]);
+  });
+
+  it('matches nested mock arguments regardless of object key order', () => {
+    const result = runMock(
+      { type: 'match', cases: [{ when: { nested: { a: 1, b: [2, 3] } }, result: 'matched' }] },
+      { nested: { b: [2, 3], a: 1 } },
+    );
+    expect(result).toEqual({ ok: true, result: 'matched' });
   });
 
   it('runs every test and counts passes and failures', async () => {

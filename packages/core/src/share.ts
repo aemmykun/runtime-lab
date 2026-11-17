@@ -1,4 +1,6 @@
 import { redactDeep } from './redact.js';
+import { isProviderId } from './providers.js';
+import { parseToolDefinitions } from './mockTools.js';
 import type { Run } from './types.js';
 
 export const SHARE_PARAM = 'share';
@@ -27,7 +29,7 @@ function replaceStringDeep<T>(value: T, needle: string, replacement: string): T 
 /** Produces the copy of a run that is safe to share. Keys are always scrubbed. */
 export function sanitizeRunForShare(run: Run, opts: ShareOptions = {}): Run {
   let out: Run = redactDeep(structuredClone(run), opts.secrets ?? []);
-  const system = run.config.system;
+  const system = out.config.system;
   if (!opts.includeSystemPrompt && system) {
     out = replaceStringDeep(out, system, SYSTEM_REMOVED);
     out.config = { ...out.config, system: SYSTEM_REMOVED };
@@ -88,18 +90,97 @@ export function importRunJson(json: string): Run {
   return validateRun(data);
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const hasOptionalString = (obj: Record<string, unknown>, key: string) => obj[key] === undefined || typeof obj[key] === 'string';
+const hasOptionalNumber = (obj: Record<string, unknown>, key: string) => obj[key] === undefined || isFiniteNumber(obj[key]);
+
+function isUsage(value: unknown): boolean {
+  return isRecord(value) && isFiniteNumber(value.inputTokens) && isFiniteNumber(value.outputTokens);
+}
+
+function isHttpExchange(value: unknown): boolean {
+  if (!isRecord(value) || !isRecord(value.request)) return false;
+  const request = value.request;
+  if (typeof request.url !== 'string' || typeof request.method !== 'string' || !isRecord(request.headers)) return false;
+  if (Object.values(request.headers).some((header) => typeof header !== 'string')) return false;
+  if (!Object.hasOwn(request, 'body')) return false;
+  if (value.response === undefined) return true;
+  return isRecord(value.response) && isFiniteNumber(value.response.status) && Object.hasOwn(value.response, 'body');
+}
+
+function isTraceStep(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.id !== 'string' ||
+    !['model', 'tool', 'system', 'validation'].includes(value.type as string) ||
+    !isFiniteNumber(value.startedAt) ||
+    !isFiniteNumber(value.endedAt) ||
+    !Object.hasOwn(value, 'input') ||
+    !Object.hasOwn(value, 'output') ||
+    typeof value.label !== 'string' ||
+    !isFiniteNumber(value.latencyMs)
+  )
+    return false;
+  if (value.usage !== undefined && !isUsage(value.usage)) return false;
+  if (value.costUsd !== undefined && value.costUsd !== null && !isFiniteNumber(value.costUsd)) return false;
+  if (value.http !== undefined && !isHttpExchange(value.http)) return false;
+  if (value.error !== undefined) {
+    if (
+      !isRecord(value.error) ||
+      !['provider', 'network', 'validation', 'tool', 'config'].includes(value.error.source as string) ||
+      typeof value.error.message !== 'string' ||
+      !hasOptionalNumber(value.error, 'status') ||
+      !hasOptionalString(value.error, 'code')
+    )
+      return false;
+  }
+  return true;
+}
+
 export function validateRun(data: unknown): Run {
-  const r = data as Partial<Run>;
+  const r = data as Partial<Run> | null;
   const problems: string[] = [];
-  if (!r || typeof r !== 'object') throw new Error('Run must be an object');
+  if (!isRecord(r)) throw new Error('Run must be an object');
   if (r.schema !== 'runtime-lab/run@1') problems.push('schema must be "runtime-lab/run@1"');
-  if (typeof r.id !== 'string') problems.push('id must be a string');
-  if (!r.config || typeof r.config !== 'object' || typeof r.config.model !== 'string') problems.push('config.model is required');
-  if (!r.trace || !Array.isArray(r.trace.steps)) problems.push('trace.steps must be an array');
-  else
-    r.trace.steps.forEach((s, i) => {
-      if (!['model', 'tool', 'system', 'validation'].includes(s?.type)) problems.push(`trace.steps[${i}].type is invalid`);
+  if (typeof r.id !== 'string' || !r.id) problems.push('id must be a non-empty string');
+  if (typeof r.createdAt !== 'string' || !Number.isFinite(Date.parse(r.createdAt))) problems.push('createdAt must be a valid date string');
+  if (!hasOptionalString(r, 'title') || !hasOptionalString(r, 'projectId') || !hasOptionalString(r, 'experimentId') || !hasOptionalString(r, 'notes') || !hasOptionalString(r, 'source'))
+    problems.push('optional run metadata fields must be strings');
+  if (!isRecord(r.config)) problems.push('config must be an object');
+  else {
+    const config = r.config;
+    if (!isProviderId(config.provider)) problems.push('config.provider must be a known provider');
+    if (typeof config.model !== 'string' || !config.model) problems.push('config.model is required');
+    if (config.system !== undefined && typeof config.system !== 'string') problems.push('config.system must be a string');
+    if (
+      !Array.isArray(config.messages) ||
+      config.messages.some((message) => !isRecord(message) || !['user', 'assistant'].includes(message.role as string) || typeof message.content !== 'string')
+    )
+      problems.push('config.messages must contain user or assistant messages with string content');
+    for (const key of ['temperature', 'maxTokens', 'maxTurns']) {
+      if (!hasOptionalNumber(config, key)) problems.push(`config.${key} must be a number`);
+    }
+    if (config.tools !== undefined) {
+      const parsedTools = parseToolDefinitions(JSON.stringify(config.tools));
+      if (!Array.isArray(config.tools) || parsedTools.errors.length) problems.push('config.tools must contain valid tool definitions');
+    }
+  }
+  if (!isRecord(r.trace)) problems.push('trace must be an object');
+  else {
+    const trace = r.trace;
+    if (typeof trace.id !== 'string' || !trace.id) problems.push('trace.id must be a non-empty string');
+    for (const key of ['startedAt', 'completedAt', 'totalLatencyMs', 'totalTokens', 'inputTokens', 'outputTokens']) {
+      if (!isFiniteNumber(trace[key])) problems.push(`trace.${key} must be a number`);
+    }
+    if (trace.costUsd !== null && !isFiniteNumber(trace.costUsd)) problems.push('trace.costUsd must be a number or null');
+    if (trace.status !== 'ok' && trace.status !== 'error') problems.push('trace.status must be "ok" or "error"');
+    if (typeof trace.output !== 'string') problems.push('trace.output must be a string');
+    if (!Array.isArray(trace.steps)) problems.push('trace.steps must be an array');
+    else trace.steps.forEach((step, i) => {
+      if (!isTraceStep(step)) problems.push(`trace.steps[${i}] is invalid`);
     });
+  }
   if (problems.length) throw new Error(`Invalid run file: ${problems.join('; ')}`);
   return r as Run;
 }

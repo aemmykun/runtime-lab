@@ -74,6 +74,24 @@ describe('runtimes-lab CLI', () => {
     expect(t.written['r.json']).not.toContain('sk-test-cli');
   });
 
+  it('redacts environment keys from console diagnostics and JSON artifacts', async () => {
+    const secret = 'custom-cli-secret-key-without-prefix-998';
+    const testSuite = {
+      name: `suite ${secret}`,
+      defaults: { provider: 'openai', model: 'gpt-5-mini' },
+      tests: [{ name: `test ${secret}`, prompt: 'hi', assertions: [{ type: 'contains', value: secret }] }],
+    };
+    const files = { 'suite.json': JSON.stringify(testSuite) };
+    const keyEnv = { OPENAI_API_KEY: secret };
+    const consoleRun = io(['safe output'], files, keyEnv);
+    expect(await main(['run', 'suite.json'], consoleRun.x)).toBe(1);
+    expect([...consoleRun.out, ...consoleRun.err].join('\n')).not.toContain(secret);
+
+    const jsonRun = io(['safe output'], files, keyEnv);
+    expect(await main(['run', 'suite.json', '--json', '--out', 'results.json'], jsonRun.x)).toBe(1);
+    expect([...jsonRun.out, jsonRun.written['results.json']!].join('\n')).not.toContain(secret);
+  });
+
   it('prints help and version', async () => {
     const t = io([]);
     expect(await main(['--help'], t.x)).toBe(0);

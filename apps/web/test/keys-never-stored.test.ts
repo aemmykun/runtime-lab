@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decodeShareFragment, encodeShareLink, exportRunJson } from '@runtime-lab/core';
-import { loadRememberedKeys, rememberKey, saveRun, updateRunNotes } from '~/db/repo';
+import { loadRememberedKeys, rememberKey, saveExperiment, saveRun, updateRunNotes } from '~/db/repo';
 import { runDraft } from '~/services/trace-engine';
 import { currentSecrets, useSessionStore } from '~/stores/session-store';
 import { FAKE_KEY, dumpDb, freshDb, spyFetch } from './helpers';
@@ -43,6 +43,38 @@ describe('API keys never reach IndexedDB or share links', () => {
     await saveRun({ ...SAMPLE_RUN, id: 'notes' });
     await updateRunNotes('notes', 'A note with custom-key-without-known-prefix-999', currentSecrets());
     expect(JSON.stringify(await dumpDb(db))).not.toContain('custom-key-without-known-prefix-999');
+  });
+
+  it('redacts experiment fields and history before persistence', async () => {
+    const db = await freshDb();
+    const secret = 'custom-experiment-key-without-prefix-321';
+    useSessionStore.getState().setKey('anthropic', secret);
+    await saveExperiment({ title: secret, hypothesis: `hypothesis ${secret}`, notes: `notes ${secret}` }, currentSecrets());
+    expect(JSON.stringify(await dumpDb(db))).not.toContain(secret);
+  });
+
+  it('redacts keys captured when a run starts even if the current key changes', async () => {
+    const db = await freshDb();
+    const originalKey = 'custom-inflight-key-without-prefix-876';
+    useSessionStore.getState().setKey('openai', originalKey);
+    useSessionStore.getState().setDraft({ toolsJson: '[]', prompt: `prompt includes ${originalKey}` });
+    let respond!: (response: Response) => void;
+    let notifyFetch!: () => void;
+    const fetched = new Promise<void>((resolve) => {
+      notifyFetch = resolve;
+    });
+    const fetch = async () => {
+      notifyFetch();
+      return new Promise<Response>((resolve) => {
+        respond = resolve;
+      });
+    };
+    const pending = runDraft(fetch);
+    await fetched;
+    useSessionStore.getState().setKey('openai', 'replacement-key');
+    respond(new Response(JSON.stringify({ choices: [{ message: { content: 'done' } }], usage: { prompt_tokens: 1, completion_tokens: 1 } })));
+    await pending;
+    expect(JSON.stringify(await dumpDb(db))).not.toContain(originalKey);
   });
 
   it('share links and JSON exports never contain the key', async () => {

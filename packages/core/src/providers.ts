@@ -118,5 +118,5 @@ export const ALLOWED_ORIGINS: readonly string[] = [
 ];
 
 export function isProviderId(x: unknown): x is ProviderId {
-  return typeof x === 'string' && x in PROVIDERS;
+  return typeof x === 'string' && Object.hasOwn(PROVIDERS, x);
 }

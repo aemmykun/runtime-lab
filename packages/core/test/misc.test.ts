@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderTraceCardSvg } from '../src/card.js';
 import { diffLines, diffRuns } from '../src/diff.js';
 import { BlockedRequestError, guardedFetch, isAllowedUrl } from '../src/network.js';
-import { ALLOWED_ORIGINS, PROVIDERS } from '../src/providers.js';
+import { ALLOWED_ORIGINS, isProviderId, PROVIDERS } from '../src/providers.js';
 import { SAMPLE_RUN } from '../src/sample.js';
 import { summarizeTrace } from '../src/traceEngine.js';
 import { validateRun } from '../src/share.js';
@@ -25,6 +25,10 @@ describe('network guard', () => {
   it('every provider base URL is in the allow-list', () => {
     for (const p of Object.values(PROVIDERS)) expect(ALLOWED_ORIGINS).toContain(new URL(p.baseUrl).origin);
   });
+  it('does not accept inherited provider names', () => {
+    expect(isProviderId('constructor')).toBe(false);
+    expect(isProviderId('toString')).toBe(false);
+  });
 });
 
 describe('diff', () => {
@@ -42,6 +46,18 @@ describe('diff', () => {
     expect(d.config).toEqual([{ field: 'model', a: 'gpt-5-mini', b: 'other' }]);
     expect(d.metrics.find((m) => m.metric === 'latencyMs')!.delta).toBe(100 - SAMPLE_RUN.trace.totalLatencyMs);
     expect(d.output.some((l) => l.op === 'add' && l.text === 'changed')).toBe(true);
+  });
+  it('reports tool-definition and turn-limit changes', () => {
+    const firstTool = SAMPLE_RUN.config.tools![0]!;
+    const b = {
+      ...SAMPLE_RUN,
+      config: {
+        ...SAMPLE_RUN.config,
+        tools: [{ ...firstTool, description: `${firstTool.description} changed` }],
+        maxTurns: 6,
+      },
+    };
+    expect(diffRuns(SAMPLE_RUN, b).config.map((change) => change.field)).toEqual(['tools', 'maxTurns']);
   });
 });
 

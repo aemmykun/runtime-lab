@@ -41,9 +41,7 @@ export function redactDeep<T>(value: T, secrets: readonly string[] = []): T {
     }
     if (Array.isArray(v)) return v.map((x) => walk(x));
     if (v && typeof v === 'object') {
-      const out: Record<string, unknown> = {};
-      for (const [k, x] of Object.entries(v as Record<string, unknown>)) out[k] = walk(x, k);
-      return out;
+      return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [redactString(k, secrets), walk(x, k)]));
     }
     return v;
   };

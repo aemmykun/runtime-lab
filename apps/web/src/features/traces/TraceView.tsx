@@ -10,6 +10,7 @@ import { updateRunNotes } from '~/db/repo';
 import { ExportPanel } from '~/features/exports/ExportPanel';
 import { formatMs, formatTime } from '~/lib/utils';
 import { configToDraft, currentSecrets, useSessionStore } from '~/stores/session-store';
+import { useTraceStore } from '~/stores/trace-store';
 import { AgentGraph } from './AgentGraph';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import { MetricsCharts } from './MetricsCharts';
@@ -58,6 +59,7 @@ function Notes({ run, editable }: { run: Run; editable: boolean }) {
   const [notes, setNotes] = useState(run.notes ?? '');
   const [saved, setSaved] = useState(false);
   const qc = useQueryClient();
+  const showRun = useTraceStore((s) => s.show);
   if (!editable) return <p className="text-sm text-slate-400">Notes are only available for runs saved in your local lab.</p>;
   return (
     <div className="space-y-2">
@@ -65,7 +67,9 @@ function Notes({ run, editable }: { run: Run; editable: boolean }) {
       <Button
         size="sm"
         onClick={async () => {
-          await updateRunNotes(run.id, notes, currentSecrets());
+          const cleanNotes = await updateRunNotes(run.id, notes, currentSecrets());
+          setNotes(cleanNotes);
+          showRun({ ...run, notes: cleanNotes });
           await qc.invalidateQueries({ queryKey: ['runs'] });
           setSaved(true);
           setTimeout(() => setSaved(false), 1500);
@@ -81,9 +85,11 @@ function Notes({ run, editable }: { run: Run; editable: boolean }) {
 export function TraceView({ run, editable = true }: { run: Run; editable?: boolean }) {
   const [tab, setTab] = useState<Tab>('timeline');
   const loadConfig = useSessionStore((s) => s.loadConfig);
+  const currentRun = useTraceStore((s) => s.current);
+  const displayedRun = editable && currentRun?.id === run.id ? currentRun : run;
   return (
     <div className="space-y-4">
-      <TraceSummary run={run} />
+      <TraceSummary run={displayedRun} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Tabs
           value={tab}
@@ -97,16 +103,16 @@ export function TraceView({ run, editable = true }: { run: Run; editable?: boole
           ]}
         />
         {editable && (
-          <Button variant="ghost" size="sm" onClick={() => loadConfig(configToDraft(run.config, run.title ?? ''))}>
+          <Button variant="ghost" size="sm" onClick={() => loadConfig(configToDraft(displayedRun.config, displayedRun.title ?? ''))}>
             <Pencil /> Load into editor
           </Button>
         )}
       </div>
-      {tab === 'timeline' && <ExecutionTimeline steps={run.trace.steps} />}
-      {tab === 'metrics' && <MetricsCharts trace={run.trace} />}
-      {tab === 'graph' && <AgentGraph trace={run.trace} />}
-      {tab === 'export' && <ExportPanel run={run} />}
-      {tab === 'notes' && <Notes key={run.id} run={run} editable={editable} />}
+      {tab === 'timeline' && <ExecutionTimeline steps={displayedRun.trace.steps} />}
+      {tab === 'metrics' && <MetricsCharts trace={displayedRun.trace} />}
+      {tab === 'graph' && <AgentGraph trace={displayedRun.trace} />}
+      {tab === 'export' && <ExportPanel run={displayedRun} />}
+      {tab === 'notes' && <Notes key={displayedRun.id} run={displayedRun} editable={editable} />}
     </div>
   );
 }

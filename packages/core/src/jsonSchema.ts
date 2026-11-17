@@ -1,4 +1,5 @@
 import type { JsonSchema } from './types.js';
+import { jsonEqual } from './json.js';
 
 /**
  * A deliberately small, eval-free JSON Schema validator. Runtime Lab ships a
@@ -42,10 +43,10 @@ export function validateJsonSchema(value: unknown, schema: JsonSchema, path = '$
       return issues;
     }
   }
-  if (schema.const !== undefined && JSON.stringify(value) !== JSON.stringify(schema.const)) {
+  if (schema.const !== undefined && !jsonEqual(value, schema.const)) {
     issues.push({ path, message: `expected const ${JSON.stringify(schema.const)}` });
   }
-  if (schema.enum && !schema.enum.some((e) => JSON.stringify(e) === JSON.stringify(value))) {
+  if (schema.enum && !schema.enum.some((e) => jsonEqual(e, value))) {
     issues.push({ path, message: `expected one of ${JSON.stringify(schema.enum)}` });
   }
   if (typeof value === 'number') {
@@ -65,10 +66,10 @@ export function validateJsonSchema(value: unknown, schema: JsonSchema, path = '$
   if (typeOf(value) === 'object') {
     const obj = value as Record<string, unknown>;
     for (const key of schema.required ?? []) {
-      if (!(key in obj)) issues.push({ path: `${path}.${key}`, message: 'is required' });
+      if (!Object.hasOwn(obj, key)) issues.push({ path: `${path}.${key}`, message: 'is required' });
     }
     for (const [key, sub] of Object.entries(schema.properties ?? {})) {
-      if (key in obj) issues.push(...validateJsonSchema(obj[key], sub, `${path}.${key}`));
+      if (Object.hasOwn(obj, key)) issues.push(...validateJsonSchema(obj[key], sub, `${path}.${key}`));
     }
     if (schema.additionalProperties === false) {
       const allowed = new Set(Object.keys(schema.properties ?? {}));

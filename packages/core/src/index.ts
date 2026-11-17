@@ -1,4 +1,5 @@
 export * from './types.js';
+export * from './json.js';
 export * from './providers.js';
 export * from './network.js';
 export * from './adapters.js';

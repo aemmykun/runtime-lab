@@ -31,6 +31,24 @@ describe('share', () => {
     expect(back.notes).toBeUndefined();
   });
 
+  it('removes copies of the redacted system prompt from the trace', () => {
+    const secretPrompt = 'confidential custom system phrase 99887';
+    const run: Run = {
+      ...SAMPLE_RUN,
+      config: { ...SAMPLE_RUN.config, system: secretPrompt },
+      trace: {
+        ...SAMPLE_RUN.trace,
+        steps: SAMPLE_RUN.trace.steps.map((step) =>
+          step.type === 'system' ? { ...step, input: { prompt: secretPrompt }, output: secretPrompt } : step,
+        ),
+      },
+    };
+    const link = encodeShareLink(run, 'https://example.test/', { secrets: [secretPrompt] });
+    const shared = JSON.stringify(decodeShareFragment(new URL(link).hash));
+    expect(shared).not.toContain(secretPrompt);
+    expect(shared).toContain(SYSTEM_REMOVED);
+  });
+
   it('JSON export keeps raw payloads but never keys', () => {
     const json = exportRunJson(leaky, { secrets: [TEST_KEY] });
     expect(json).not.toContain(TEST_KEY);
@@ -43,6 +61,22 @@ describe('share', () => {
     expect(() => importRunJson('{"schema":"x"}')).toThrow(/Invalid run file/);
     expect(() => decodeShareFragment('#share=!!!')).toThrow(/corrupted/);
     expect(() => decodeShareFragment('#nothing')).toThrow(/No shared run/);
+  });
+
+  it('rejects runs missing required config, trace, step, and metric fields', () => {
+    const invalid = {
+      schema: 'runtime-lab/run@1',
+      id: 'broken',
+      config: { model: 'm' },
+      trace: { steps: [] },
+    };
+    expect(() => importRunJson(JSON.stringify(invalid))).toThrow(/createdAt[\s\S]*config.provider[\s\S]*config.messages[\s\S]*trace.id[\s\S]*trace.totalTokens/);
+
+    const invalidStep = {
+      ...SAMPLE_RUN,
+      trace: { ...SAMPLE_RUN.trace, steps: [{ type: 'model' }] },
+    };
+    expect(() => importRunJson(JSON.stringify(invalidStep))).toThrow(/trace.steps\[0\] is invalid/);
   });
 
   it('handles non-ASCII text', () => {

@@ -26,6 +26,12 @@ describe('redaction', () => {
     expect(input.k).toBe(TEST_KEY);
   });
 
+  it('redacts known secrets in property names', () => {
+    const value = redactDeep({ [TEST_KEY]: 'field name' }, [TEST_KEY]);
+    expect(JSON.stringify(value)).not.toContain(TEST_KEY);
+    expect((value as Record<string, unknown>)[REDACTED]).toBe('field name');
+  });
+
   it('detects secrets', () => {
     expect(containsSecret(`x ${TEST_KEY}`, [])).toBe(true);
     expect(containsSecret('hello world', ['nothere'])).toBe(false);

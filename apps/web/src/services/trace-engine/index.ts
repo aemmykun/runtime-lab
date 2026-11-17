@@ -40,6 +40,7 @@ export async function runDraft(inner?: FetchLike): Promise<Run | undefined> {
     traces.setError((e as Error).message);
     return undefined;
   }
+  const capturedSecrets = Object.values(session.keys).filter((key): key is string => !!key);
   session.setRunning(true);
   traces.beginLive();
   try {
@@ -51,7 +52,7 @@ export async function runDraft(inner?: FetchLike): Promise<Run | undefined> {
     });
     run.projectId = session.activeProjectId;
     run.experimentId = session.activeExperimentId;
-    const saved = await saveRun(run, currentSecrets());
+    const saved = await saveRun(run, [...capturedSecrets, ...currentSecrets()]);
     useTraceStore.getState().show(saved);
     return saved;
   } finally {

@@ -25,9 +25,15 @@ export async function createProject(name: string): Promise<Project> {
  */
 export async function saveRun(run: Run, secrets: readonly string[] = [], action: HistoryRecord['action'] = 'run'): Promise<Run> {
   const clean = redactDeep(run, secrets);
-  const { run: r, trace } = toRecords(clean);
+  let { run: r, trace } = toRecords(clean);
   const db = getDb();
   await db.transaction('rw', db.runs, db.traces, db.history, db.experiments, async () => {
+    const owner = await db.runs.where('traceId').equals(trace.id).filter((candidate) => candidate.id !== r.id).first();
+    if (owner) {
+      trace = { ...trace, id: newId('trace') };
+      r = { ...r, traceId: trace.id };
+      clean.trace = { ...clean.trace, id: trace.id };
+    }
     await db.runs.put(r);
     await db.traces.put(trace);
     if (clean.experimentId) {
@@ -52,8 +58,10 @@ export async function getRun(id: string): Promise<Run | undefined> {
   return t ? fromRecords(r, t) : undefined;
 }
 
-export async function updateRunNotes(id: string, notes: string, secrets: readonly string[] = []) {
-  await getDb().runs.update(id, { notes: redactString(notes, secrets) });
+export async function updateRunNotes(id: string, notes: string, secrets: readonly string[] = []): Promise<string> {
+  const clean = redactString(notes, secrets);
+  await getDb().runs.update(id, { notes: clean });
+  return clean;
 }
 
 export async function deleteRun(id: string) {
@@ -62,7 +70,8 @@ export async function deleteRun(id: string) {
   if (!r) return;
   await db.transaction('rw', db.runs, db.traces, db.experiments, db.history, async () => {
     await db.runs.delete(id);
-    await db.traces.delete(r.traceId);
+    const traceOwner = await db.runs.where('traceId').equals(r.traceId).first();
+    if (!traceOwner) await db.traces.delete(r.traceId);
     const exps = await db.experiments.toArray();
     for (const e of exps) if (e.traces.includes(id)) await db.experiments.put({ ...e, traces: e.traces.filter((x) => x !== id) });
     await log('delete', `Deleted run ${r.title ?? r.id}`, id);
@@ -74,18 +83,21 @@ export async function listExperiments(projectId?: string): Promise<ExperimentRec
   return projectId ? all.filter((e) => (e.projectId ?? DEFAULT_PROJECT_ID) === projectId) : all;
 }
 
-export async function saveExperiment(e: Omit<Experiment, 'id' | 'traces'> & Partial<Pick<Experiment, 'id' | 'traces'>>): Promise<ExperimentRecord> {
+export async function saveExperiment(
+  e: Omit<Experiment, 'id' | 'traces'> & Partial<Pick<Experiment, 'id' | 'traces'>>,
+  secrets: readonly string[] = [],
+): Promise<ExperimentRecord> {
   const db = getDb();
   const existing = e.id ? await db.experiments.get(e.id) : undefined;
-  const rec: ExperimentRecord = {
+  const rec: ExperimentRecord = redactDeep({
     id: e.id ?? newId('exp'),
     title: e.title,
     hypothesis: e.hypothesis,
     notes: e.notes,
-    traces: e.traces ?? existing?.traces ?? [],
-    projectId: e.projectId ?? existing?.projectId ?? DEFAULT_PROJECT_ID,
+    traces: existing?.traces ?? e.traces ?? [],
+    projectId: existing?.projectId ?? e.projectId ?? DEFAULT_PROJECT_ID,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
-  };
+  }, secrets);
   await db.experiments.put(rec);
   await log('experiment', `${existing ? 'Updated' : 'Created'} experiment "${rec.title}"`, rec.id);
   return rec;

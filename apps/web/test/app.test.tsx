@@ -1,9 +1,13 @@
 import { SAMPLE_RUN } from '@runtime-lab/core';
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { getRun, listRuns, saveExperiment, listExperiments, deleteRun } from '~/db/repo';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getRun, listRuns, saveExperiment, listExperiments, deleteRun, saveRun } from '~/db/repo';
+import { Button } from '~/components/ui/button';
 import { buildGraph } from '~/features/traces/AgentGraph';
 import { ExecutionTimeline } from '~/features/traces/ExecutionTimeline';
+import { TraceView } from '~/features/traces/TraceView';
 import { CREATOR, PRODUCT_NAME, REPO_URL, SPONSOR_URL } from '~/lib/config';
 import { DraftError, draftToConfig, runDraft } from '~/services/trace-engine';
 import { initialDraft, useSessionStore } from '~/stores/session-store';
@@ -50,6 +54,21 @@ describe('lab flow (IndexedDB)', () => {
     expect((await listExperiments())[0]!.traces).toEqual([]);
   });
 
+  it('gives each imported run exclusive ownership of its trace', async () => {
+    const first = await saveRun({ ...SAMPLE_RUN, id: 'import-a' });
+    const second = await saveRun({ ...SAMPLE_RUN, id: 'import-b' });
+    expect(second.trace.id).not.toBe(first.trace.id);
+    await deleteRun(first.id);
+    expect(await getRun(second.id)).toBeDefined();
+  });
+
+  it('keeps an edited experiment in its original project with its run associations', async () => {
+    const original = await saveExperiment({ title: 'original', hypothesis: '', notes: '', projectId: 'project-a', traces: ['run-a'] });
+    const updated = await saveExperiment({ id: original.id, title: 'updated', hypothesis: '', notes: '', projectId: 'project-b', traces: ['run-b'] });
+    expect(updated.projectId).toBe('project-a');
+    expect(updated.traces).toEqual(['run-a']);
+  });
+
   it('reports a missing key as a traced error without any network call', async () => {
     const { fetch, urls } = spyFetch();
     const run = (await runDraft(fetch))!;
@@ -60,6 +79,8 @@ describe('lab flow (IndexedDB)', () => {
 });
 
 describe('trace UI', () => {
+  beforeEach(freshDb);
+
   it('timeline shows every step and opens errors by default', () => {
     render(<ExecutionTimeline steps={SAMPLE_RUN.trace.steps} />);
     expect(screen.getAllByRole('listitem')).toHaveLength(SAMPLE_RUN.trace.steps.length);
@@ -72,5 +93,37 @@ describe('trace UI', () => {
     expect(nodes.at(-1)!.id).toBe('output');
     expect(edges.some((e) => e.source === 'step_5' && e.target === 'step_6')).toBe(true);
     expect(nodes.filter((n) => n.id.startsWith('step_')).length).toBe(5);
+  });
+
+  it('keeps saved notes when switching tabs', async () => {
+    const run = await saveRun({ ...SAMPLE_RUN, id: 'notes-ui' });
+    useTraceStore.getState().show(run);
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <TraceView run={run} />
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Notes' }));
+    fireEvent.change(screen.getByPlaceholderText('What did you change? What did you learn?'), { target: { value: 'saved note' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save notes' }));
+    await waitFor(() => expect(useTraceStore.getState().current?.notes).toBe('saved note'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Timeline' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Notes' }));
+    expect((screen.getByPlaceholderText('What did you change? What did you learn?') as HTMLTextAreaElement).value).toBe('saved note');
+  });
+
+  it('defaults non-submit buttons to button while preserving explicit submit', () => {
+    const onSubmit = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <Button>Example</Button>
+        <Button type="submit">Run</Button>
+      </form>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Example' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 });

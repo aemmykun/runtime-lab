@@ -8,6 +8,8 @@ import {
   runSuite,
   testToRunConfig,
   formatUsd,
+  redactDeep,
+  redactString,
   type FetchLike,
   type PriceTable,
   type ProviderId,
@@ -115,22 +117,23 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
     io.stderr(`Missing API key environment variable(s): ${missing.map((p) => PROVIDERS[p].keyEnv).join(', ')}`);
     return 2;
   }
+  const secrets = [...needed].map((p) => io.env[PROVIDERS[p].keyEnv]).filter((key): key is string => !!key);
 
   const fetch = guardedFetch(io.fetch);
   const getAdapter = (p: ProviderId) => createAdapter(p, { apiKey: io.env[PROVIDERS[p].keyEnv], fetch });
-  if (!args.json) io.stdout(`Running suite "${suite.name}" (${suite.tests.length} test(s))`);
+  if (!args.json) io.stdout(redactString(`Running suite "${suite.name}" (${suite.tests.length} test(s))`, secrets));
   const result: SuiteResult = await runSuite(suite, {
     getAdapter,
     priceTable,
     onResult: (r) => {
       if (args.json) return;
       const t = r.run.trace;
-      io.stdout(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  (${Math.round(t.totalLatencyMs)} ms, ${t.totalTokens} tokens, ${formatUsd(t.costUsd)})`);
-      for (const a of r.assertions) if (!a.pass) io.stdout(`      ✗ ${a.type}: ${a.message}`);
+      io.stdout(redactString(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  (${Math.round(t.totalLatencyMs)} ms, ${t.totalTokens} tokens, ${formatUsd(t.costUsd)})`, secrets));
+      for (const a of r.assertions) if (!a.pass) io.stdout(redactString(`      ✗ ${a.type}: ${a.message}`, secrets));
     },
   });
 
-  const summary = {
+  const summary = redactDeep({
     name: result.name,
     passed: result.passed,
     failed: result.failed,
@@ -144,7 +147,7 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
       output: r.run.trace.output,
       errors: r.run.trace.steps.filter((s) => s.error).map((s) => s.error),
     })),
-  };
+  }, secrets);
   if (args.out) await io.writeFile(args.out, JSON.stringify(summary, null, 2));
   if (args.json) io.stdout(JSON.stringify(summary, null, 2));
   else io.stdout(`\n${result.passed} passed, ${result.failed} failed`);

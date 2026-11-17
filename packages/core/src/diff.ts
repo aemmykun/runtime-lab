@@ -55,9 +55,10 @@ export function diffRuns(a: Run, b: Run): RunDiff {
     ['model', (r) => r.config.model],
     ['system', (r) => r.config.system ?? ''],
     ['prompt', (r) => r.config.messages.map((m) => `${m.role}: ${m.content}`).join('\n')],
-    ['tools', (r) => (r.config.tools ?? []).map((t) => t.name).join(', ')],
+    ['tools', (r) => r.config.tools ?? []],
     ['temperature', (r) => r.config.temperature ?? null],
     ['maxTokens', (r) => r.config.maxTokens ?? null],
+    ['maxTurns', (r) => r.config.maxTurns ?? null],
   ];
   const config = fields.map(([field, get]) => ({ field, a: get(a), b: get(b) })).filter((c) => JSON.stringify(c.a) !== JSON.stringify(c.b));
   const count = (r: Run, t: string) => r.trace.steps.filter((s) => s.type === t).length;

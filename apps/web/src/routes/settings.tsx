@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { Textarea } from '~/components/ui/input';
-import { clearAllData, forgetAllKeys } from '~/db/repo';
+import { clearAllData, ensureDefaultProject, forgetAllKeys, DEFAULT_PROJECT_ID } from '~/db/repo';
 import { useHistory } from '~/lib/queries';
 import { formatTime } from '~/lib/utils';
 import { useSessionStore } from '~/stores/session-store';
@@ -17,6 +17,7 @@ function SettingsPage() {
   const [text, setText] = useState(() => JSON.stringify(table, null, 2));
   const [msg, setMsg] = useState<string>();
   const remembered = useSessionStore((s) => s.remembered);
+  const running = useSessionStore((s) => s.running);
   const { data: history = [] } = useHistory();
   const qc = useQueryClient();
   useEffect(() => setText(JSON.stringify(table, null, 2)), [table]);
@@ -91,11 +92,16 @@ function SettingsPage() {
           <Button
             size="sm"
             variant="destructive"
+            disabled={running}
             onClick={async () => {
               if (!window.confirm('Delete all projects, experiments, runs, history, settings and remembered keys from this browser?')) return;
+              if (useSessionStore.getState().running) return;
               await clearAllData();
+              await ensureDefaultProject();
               useSessionStore.getState().clearKeys();
+              useSessionStore.getState().setActiveProject(DEFAULT_PROJECT_ID);
               useTraceStore.getState().show(undefined);
+              useTraceStore.getState().clearCompare();
               await qc.invalidateQueries();
             }}
           >

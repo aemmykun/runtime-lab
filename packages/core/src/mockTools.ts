@@ -1,11 +1,14 @@
 import type { JsonValue, MockHandler, ToolDefinition } from './types.js';
 import { validateJsonSchema } from './jsonSchema.js';
+import { jsonEqual } from './json.js';
 
 export type MockOutcome = { ok: true; result: JsonValue } | { ok: false; error: string };
 
 function matches(when: Record<string, JsonValue>, args: Record<string, unknown>): boolean {
-  return Object.entries(when).every(([k, v]) => JSON.stringify(args[k]) === JSON.stringify(v));
+  return Object.entries(when).every(([k, v]) => Object.hasOwn(args, k) && jsonEqual(args[k], v));
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
 /** Answers a tool call from its declarative JSON mock. No user code is ever executed. */
 export function runMock(handler: MockHandler, args: Record<string, unknown>): MockOutcome {
@@ -41,11 +44,23 @@ export function parseToolDefinitions(json: string): { tools: ToolDefinition[]; e
     if (typeof tool.name !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(tool.name)) errors.push(`${where}.name must match ^[A-Za-z0-9_-]{1,64}$`);
     else if (names.has(tool.name)) errors.push(`${where}.name "${tool.name}" is duplicated`);
     else names.add(tool.name);
-    if (!tool.parameters || typeof tool.parameters !== 'object') errors.push(`${where}.parameters must be a JSON Schema object`);
+    if (!tool.parameters || !isRecord(tool.parameters)) errors.push(`${where}.parameters must be a JSON Schema object`);
     const m = tool.mock as MockHandler | undefined;
-    if (!m || !['static', 'match', 'error'].includes((m as { type?: string }).type ?? '')) errors.push(`${where}.mock.type must be "static", "match" or "error"`);
-    else if (m.type === 'match' && !Array.isArray(m.cases)) errors.push(`${where}.mock.cases must be an array`);
-    else if (m.type === 'error' && typeof m.message !== 'string') errors.push(`${where}.mock.message must be a string`);
+    if (!isRecord(m) || !['static', 'match', 'error'].includes((m as { type?: string }).type ?? '')) errors.push(`${where}.mock.type must be "static", "match" or "error"`);
+    else if (m.type === 'static' && !Object.hasOwn(m, 'result')) errors.push(`${where}.mock.result is required`);
+    else if (m.type === 'match') {
+      if (!Array.isArray(m.cases)) errors.push(`${where}.mock.cases must be an array`);
+      else m.cases.forEach((c, j) => {
+        if (!isRecord(c)) errors.push(`${where}.mock.cases[${j}] must be an object`);
+        else {
+          if (!isRecord(c.when)) errors.push(`${where}.mock.cases[${j}].when must be an object`);
+          if (!Object.hasOwn(c, 'result')) errors.push(`${where}.mock.cases[${j}].result is required`);
+        }
+      });
+    } else if (m.type === 'error' && typeof m.message !== 'string') errors.push(`${where}.mock.message must be a string`);
+    if (tool.description !== undefined && typeof tool.description !== 'string') errors.push(`${where}.description must be a string`);
+    if (tool.mockLatencyMs !== undefined && (typeof tool.mockLatencyMs !== 'number' || !Number.isFinite(tool.mockLatencyMs) || tool.mockLatencyMs < 0))
+      errors.push(`${where}.mockLatencyMs must be a non-negative number`);
     return undefined;
   });
   return { tools: errors.length ? [] : (data as ToolDefinition[]), errors };

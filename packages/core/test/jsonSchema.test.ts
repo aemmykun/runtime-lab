@@ -33,4 +33,14 @@ describe('validateJsonSchema', () => {
     expect(validateJsonSchema({}, schema)[0]).toEqual({ path: '$.name', message: 'is required' });
     expect(validateJsonSchema([], schema)[0]?.message).toMatch(/expected object, got array/);
   });
+
+  it('compares JSON objects independent of key order and checks own properties only', () => {
+    expect(validateJsonSchema({ b: 2, a: 1 }, { const: { a: 1, b: 2 } })).toEqual([]);
+    expect(validateJsonSchema({ b: 2, a: 1 }, { enum: [{ a: 1, b: 2 }] })).toEqual([]);
+    expect(validateJsonSchema({ values: [2, 1] }, { const: { values: [1, 2] } })).toHaveLength(1);
+    expect(validateJsonSchema({}, { type: 'object', required: ['constructor', 'toString'], properties: { constructor: { type: 'string' as const } } })).toEqual([
+      { path: '$.constructor', message: 'is required' },
+      { path: '$.toString', message: 'is required' },
+    ]);
+  });
 });

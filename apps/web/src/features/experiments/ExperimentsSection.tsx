@@ -7,7 +7,7 @@ import { saveExperiment } from '~/db/repo';
 import type { ExperimentRecord } from '~/db';
 import { useExperiments } from '~/lib/queries';
 import { cn } from '~/lib/utils';
-import { useSessionStore } from '~/stores/session-store';
+import { currentSecrets, useSessionStore } from '~/stores/session-store';
 
 function ExperimentEditor({ initial, projectId, onDone }: { initial?: ExperimentRecord; projectId: string; onDone: () => void }) {
   const [title, setTitle] = useState(initial?.title ?? '');
@@ -24,7 +24,7 @@ function ExperimentEditor({ initial, projectId, onDone }: { initial?: Experiment
           size="sm"
           disabled={!title.trim()}
           onClick={async () => {
-            await saveExperiment({ id: initial?.id, title: title.trim(), hypothesis, notes, projectId });
+            await saveExperiment({ id: initial?.id, title: title.trim(), hypothesis, notes, projectId }, currentSecrets());
             await qc.invalidateQueries({ queryKey: ['experiments'] });
             onDone();
           }}
