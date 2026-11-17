@@ -42,7 +42,7 @@ jobs:
   #     - uses: actions/setup-node@v4
   #       with: { node-version: 24, cache: npm }
   #     - run: npm ci
-  #     - run: npm run build -w @runtime-lab/core && npm run build -w runtimes-lab
-  #     - run: npx --no-install runtimes-lab run examples/suite.json --out suite-results.json
+  #     - run: npm run build -w @runtime-lab/core && npm run build -w runtime-lab
+  #     - run: npx --no-install runtime-lab run examples/suite.json --out suite-results.json
   #       env:
   #         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

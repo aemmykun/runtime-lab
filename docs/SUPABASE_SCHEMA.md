@@ -86,7 +86,7 @@ create policy "members read projects" on public.projects
 - **Team sync**: share project metadata and (opt-in, encrypted) trace bundles.
 - **Scheduled regression runs**: would need a runner that holds a key, which
   conflicts with principle 1. Options: run in the customer's own CI with the
-  `runtimes-lab` CLI (works today), or a customer-hosted runner. A hosted
+  `runtime-lab` CLI (works today), or a customer-hosted runner. A hosted
   runner holding customer keys is explicitly out of scope until there is a
   security design for it.
 - **Enterprise tool mocks**: shared, versioned mock libraries per organisation.

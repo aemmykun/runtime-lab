@@ -35,7 +35,7 @@ function io(responses: string[], files: Record<string, string> = { 'suite.json':
   return { x, out, err, urls, written };
 }
 
-describe('runtimes-lab CLI', () => {
+describe('runtime-lab CLI', () => {
   it('exits 0 when every test passes', async () => {
     const t = io(['hello world', 'ok']);
     expect(await main(['run', 'suite.json'], t.x)).toBe(0);

@@ -53,7 +53,7 @@ Source: <https://github.com/aemmykun/runtime-lab> · Licence: MIT · Status: v0.
 | Export to TypeScript (official SDK), Vercel AI SDK `generateText`, Python | Done |
 | Run JSON import/export, URL-fragment share links, static SVG trace card | Done |
 | Editable price table (estimates, clearly labelled) | Done |
-| JSON test suites + `runtimes-lab` CLI (exit non-zero on failure) | Done (not published to npm) |
+| JSON test suites + `runtime-lab` CLI (exit non-zero on failure) | Done (not published to npm) |
 | Built-in sample trace (synthetic fixture) | Done |
 | PNG trace cards, embeddable live cards | Roadmap |
 | In-app suite runner, scheduled regression runs, MCP, GitHub Action | Roadmap |
@@ -94,7 +94,7 @@ apps/web/                 Static SPA (TanStack Start in SPA mode)
   src/lib/                Config (product name, links), CSP, queries (TanStack Query), utils
   scripts/                postbuild (CSP hashes), static server, Chrome smoke test
 packages/core/            Framework-free TypeScript shared by the web app and the CLI
-packages/cli/             `runtimes-lab` CLI
+packages/cli/             `runtime-lab` CLI
 docs/                     Security model, Supabase design, CI template (docs/ci/ci.yml)
 examples/suite.json       Example regression suite
 ```
@@ -209,8 +209,8 @@ example a provider error) fails its test even if the assertions would pass.
 ```bash
 npm run build                       # builds core and the CLI
 export OPENAI_API_KEY=...           # keys come from env vars only
-npx --no-install runtimes-lab validate examples/suite.json
-npx --no-install runtimes-lab run examples/suite.json [--json] [--out results.json] [--prices prices.json]
+npx --no-install runtime-lab validate examples/suite.json
+npx --no-install runtime-lab run examples/suite.json [--json] [--out results.json] [--prices prices.json]
 ```
 
 Exit codes: `0` all passed, `1` a test failed, `2` usage or configuration
@@ -218,7 +218,7 @@ error (including a missing key variable). Env vars: `OPENAI_API_KEY`,
 `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`,
 `GEMINI_API_KEY`, `OLLAMA_API_KEY` (optional).
 
-**`npx runtimes-lab run` from outside this repo does not work yet**: the
+**`npx runtime-lab run` from outside this repo does not work yet**: the
 package is not published to npm. Until it is, run it inside the repo as shown
 above (`--no-install` stops npx from looking it up on the registry).
 

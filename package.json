@@ -13,7 +13,7 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "build": "npm run build -w @runtime-lab/core && npm run build -w runtimes-lab && npm run build -w @runtime-lab/web",
+    "build": "npm run build -w @runtime-lab/core && npm run build -w runtime-lab && npm run build -w @runtime-lab/web",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint .",
     "test": "npm run test --workspaces",

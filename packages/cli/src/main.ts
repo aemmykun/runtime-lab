@@ -27,12 +27,12 @@ export interface CliIO {
   env: Record<string, string | undefined>;
 }
 
-export const HELP = `runtimes-lab ${VERSION}
+export const HELP = `runtime-lab ${VERSION}
 
 Usage:
-  runtimes-lab run <suite.json> [--json] [--out results.json] [--prices prices.json]
-  runtimes-lab validate <suite.json>
-  runtimes-lab --help | --version
+  runtime-lab run <suite.json> [--json] [--out results.json] [--prices prices.json]
+  runtime-lab validate <suite.json>
+  runtime-lab --help | --version
 
 API keys are read from environment variables only:
 ${Object.values(PROVIDERS)
