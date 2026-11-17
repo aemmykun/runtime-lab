@@ -31,11 +31,25 @@ async function check(path: string, text: RegExp) {
 try {
   await check('/', /Your AI Worked\. But Do You Know Why\?/);
   await check('/sample', /This is an example trace/);
+  await page.getByRole('button', { name: 'Play demo' }).waitFor();
+  await page.getByRole('link', { name: /Try this setup in the Lab \(needs your API key\)/ }).waitFor();
   await page.getByRole('tab', { name: 'Metrics' }).click();
   await page.getByText('Latency per step (ms)').waitFor();
   await page.getByRole('tab', { name: 'Graph' }).click();
   await page.locator('.react-flow__node').first().waitFor();
   console.log('ok  /sample metrics + graph tabs');
+  await page.getByRole('tab', { name: 'Timeline' }).click();
+  const beforePlay = requests.length;
+  await page.getByRole('button', { name: 'Play demo' }).click();
+  await page.getByText('Run started').first().waitFor();
+  await page.getByText(/hand-written example replay/).waitFor();
+  await page.getByRole('button', { name: 'Pause' }).waitFor();
+  await page.getByRole('button', { name: 'Replay' }).waitFor();
+  await page.getByText('Model turn 3').waitFor({ timeout: 10_000 });
+  await page.getByText(/Finished the hand-written example replay/).waitFor();
+  const playForeign = requests.slice(beforePlay).filter((u) => !u.startsWith(base) && !u.startsWith('data:') && !u.startsWith('blob:'));
+  if (playForeign.length) problems.push(...playForeign.map((u) => `play demo unexpected request: ${u}`));
+  else console.log('ok  /sample Play demo replay, no off-origin requests');
   await check('/lab', /No Trace Yet/);
   // Run without a key: must fail as a traced error, with no request leaving the page.
   await page.getByRole('button', { name: /Run and trace/ }).click();
