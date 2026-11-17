@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { ALLOWED_ORIGINS, BlockedRequestError } from '@runtime-lab/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { applyCsp, inlineScriptHashes } from '../scripts/postbuild';
@@ -10,6 +10,8 @@ import { useSessionStore } from '~/stores/session-store';
 import { FAKE_KEY, freshDb, spyFetch } from './helpers';
 
 const ROOT = join(__dirname, '..', '..', '..');
+// Always compare repo-relative paths with forward slashes, so the checks behave the same on Windows.
+const rel = (f: string) => relative(ROOT, f).split(sep).join('/');
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((f) => {
@@ -69,10 +71,10 @@ describe('no network calls except to provider hosts', () => {
     const offenders: string[] = [];
     for (const f of files) {
       const src = readFileSync(f, 'utf8');
-      const rel = relative(ROOT, f);
-      if (/XMLHttpRequest|WebSocket|sendBeacon|EventSource|importScripts|new Worker\(/.test(src)) offenders.push(`${rel}: forbidden API`);
+      const r = rel(f);
+      if (/XMLHttpRequest|WebSocket|sendBeacon|EventSource|importScripts|new Worker\(/.test(src)) offenders.push(`${r}: forbidden API`);
       const fetchUses = src.match(/\bglobalThis\.fetch\b|\bwindow\.fetch\b|(?<![.\w])fetch\(/g) ?? [];
-      if (fetchUses.length && rel !== 'apps/web/src/services/adapters/index.ts') offenders.push(`${rel}: direct fetch`);
+      if (fetchUses.length && r !== 'apps/web/src/services/adapters/index.ts') offenders.push(`${r}: direct fetch`);
     }
     expect(offenders).toEqual([]);
   });
@@ -92,7 +94,7 @@ describe('no network calls except to provider hosts', () => {
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^\s*\/\/.*$/gm, '');
       for (const m of code.matchAll(/https?:\/\/[^\s'"`)<>]+/g)) {
-        if (!allowedPrefixes.some((p) => m[0].startsWith(p))) bad.push(`${relative(ROOT, f)}: ${m[0]}`);
+        if (!allowedPrefixes.some((p) => m[0].startsWith(p))) bad.push(`${rel(f)}: ${m[0]}`);
       }
     }
     expect(bad).toEqual([]);
