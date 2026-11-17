@@ -1,0 +1,25 @@
+{
+  "name": "runtimes-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runtime Lab CLI: run JSON test suites against LLM providers and fail CI on regressions.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "runtimes-lab": "./dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('dist/bin.js',0o755)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@runtime-lab/core": "0.1.0"
+  }
+}
