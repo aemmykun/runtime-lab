@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppShell } from '~/components/AppShell';
 import { loadRememberedKeys } from '~/db/repo';
@@ -25,10 +25,28 @@ export const Route = createRootRoute({
       { title: `${PRODUCT_NAME} | ${PRODUCT_TAGLINE}` },
       { name: 'description', content: description },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+    ],
   }),
   component: RootComponent,
+  notFoundComponent: NotFound,
 });
+
+/** Friendly 404 for unknown URLs (instead of TanStack Router's bare "Not Found"). */
+function NotFound() {
+  return (
+    <div className="mx-auto max-w-xl px-6 py-16 text-center">
+      <h1 className="text-2xl font-semibold">Page not found</h1>
+      <p className="mt-2 text-sm opacity-70">This page doesn't exist in {PRODUCT_NAME}.</p>
+      <div className="mt-6 flex justify-center gap-3">
+        <Link to="/" className="underline">Home</Link>
+        <Link to="/lab" className="underline">Open {PRODUCT_NAME}</Link>
+      </div>
+    </div>
+  );
+}
 
 /** Client-only boot: loads settings and any keys the user explicitly chose to remember. */
 function Boot() {

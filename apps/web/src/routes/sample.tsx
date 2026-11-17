@@ -11,10 +11,18 @@ function SamplePage() {
     <div className="mx-auto max-w-5xl space-y-4 p-4">
       <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-900 bg-amber-950/30 p-3 text-sm text-amber-200">
         <Info className="size-4 shrink-0" />
-        <span className="flex-1">
-          This sample is a hand-written, synthetic trace bundled with the app. It shows what a traced run looks like (including a validation error the model recovers from). It
-          was not produced by a real provider call.
-        </span>
+        <div className="flex-1 space-y-1">
+          <p className="font-medium">This is an example trace, so you can see what Runtime Lab records. No API key needed.</p>
+          <p>
+            A customer asks <em>"Where is my order 1042?"</em>. The model calls the <code>get_order_status</code> tool with the wrong ID format
+            (<code>1042</code> instead of <code>ORD-1042</code>), Runtime Lab catches it as a validation error, the model retries with the right ID, the
+            tool answers, and the model replies.
+          </p>
+          <p className="opacity-80">
+            Read the timeline top to bottom: each row is one step, with its time, tokens and cost. Click a step to see exactly what was sent and
+            received. This example is written by hand; it did not call a real AI provider.
+          </p>
+        </div>
         <Button asChild size="sm" variant="secondary" onClick={() => loadConfig(configToDraft(SAMPLE_RUN.config, 'Sample (re-run)'))}>
           <Link to="/lab">Re-run it with your key</Link>
         </Button>

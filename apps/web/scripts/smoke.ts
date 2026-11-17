@@ -30,7 +30,7 @@ async function check(path: string, text: RegExp) {
 
 try {
   await check('/', /Your AI Worked\. But Do You Know Why\?/);
-  await check('/sample', /synthetic trace/);
+  await check('/sample', /This is an example trace/);
   await page.getByRole('tab', { name: 'Metrics' }).click();
   await page.getByText('Latency per step (ms)').waitFor();
   await page.getByRole('tab', { name: 'Graph' }).click();
