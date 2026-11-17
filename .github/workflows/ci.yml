@@ -1,6 +1,4 @@
-# CI template for Runtime Lab.
-# This file lives in docs/ci/ because the token used to create the repo has no
-# `workflow` scope. To enable it, copy it to .github/workflows/ci.yml.
+# CI for Runtime Lab: lint, typecheck, tests, build and browser smoke test.
 name: CI
 
 on:

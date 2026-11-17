@@ -95,7 +95,7 @@ apps/web/                 Static SPA (TanStack Start in SPA mode)
   scripts/                postbuild (CSP hashes), static server, Chrome smoke test
 packages/core/            Framework-free TypeScript shared by the web app and the CLI
 packages/cli/             `runtime-lab` CLI
-docs/                     Security model, Supabase design, CI template (docs/ci/ci.yml)
+docs/                     Security model, Supabase design
 examples/suite.json       Example regression suite
 ```
 
@@ -273,8 +273,8 @@ the same CSP as the meta tag plus `frame-ancestors 'none'`,
 
 Nothing is deployed by this PR.
 
-CI: a GitHub Actions template is in [docs/ci/ci.yml](docs/ci/ci.yml); copy it to
-`.github/workflows/ci.yml` to enable it.
+CI: GitHub Actions runs lint, typecheck, tests, build and a browser smoke test on
+every push to main and every pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## About the creator
 
