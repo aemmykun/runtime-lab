@@ -1,1 +1,95 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter/wght.css';
+
+/*
+  Dark emerald / sea-green theme and typography tokens.
+
+  Surfaces stay in the #022c2a–#043d3a range. The slate scale is remapped to
+  sea-green neutrals so existing utilities (bg-slate-950, border-slate-800, …)
+  pick up the theme without per-component colour rewrites. Sky is remapped to
+  teal so accents (buttons, focus rings, the logo) match.
+
+  Body text contrast on #022c2a (WCAG 2.2, relative luminance ≈ 0.019):
+    foreground #e8f6f4  ~15:1  AAA
+    slate-400  #8ec8c2  ~8.1:1 AAA
+    slate-500  #7ab5af  ~6.5:1 AA  (and ~5.3:1 on card #043d3a)
+  Primary button #14b8a6 on #022c2a text ~6:1 AA.
+*/
+@theme {
+  --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
+
+  --color-background: #022c2a;
+  --color-foreground: #e8f6f4;
+  --color-card: #043d3a;
+  --color-card-foreground: #e8f6f4;
+  --color-popover: #043d3a;
+  --color-popover-foreground: #e8f6f4;
+  --color-primary: #14b8a6;
+  --color-primary-foreground: #022c2a;
+  --color-secondary: #0d4f4a;
+  --color-secondary-foreground: #e8f6f4;
+  --color-muted: #043d3a;
+  --color-muted-foreground: #8ec8c2;
+  --color-accent: #2dd4bf;
+  --color-accent-foreground: #022c2a;
+  --color-destructive: #f87171;
+  --color-destructive-foreground: #022c2a;
+  --color-border: #0d4f4a;
+  --color-input: #0d4f4a;
+  --color-ring: #2dd4bf;
+
+  --color-slate-50: #f0fdfa;
+  --color-slate-100: #e8f6f4;
+  --color-slate-200: #cceeea;
+  --color-slate-300: #a8ddd7;
+  --color-slate-400: #8ec8c2;
+  --color-slate-500: #7ab5af;
+  --color-slate-600: #3d7a75;
+  --color-slate-700: #1a5550;
+  --color-slate-800: #0d4f4a;
+  --color-slate-900: #043d3a;
+  --color-slate-950: #022c2a;
+
+  --color-sky-300: #5eead4;
+  --color-sky-400: #2dd4bf;
+  --color-sky-500: #14b8a6;
+  --color-sky-700: #0f766e;
+  --color-sky-800: #115e59;
+  --color-sky-950: #042f2e;
+}
+
+:root {
+  --background: #022c2a;
+  --foreground: #e8f6f4;
+  --card: #043d3a;
+  --card-foreground: #e8f6f4;
+  --popover: #043d3a;
+  --popover-foreground: #e8f6f4;
+  --primary: #14b8a6;
+  --primary-foreground: #022c2a;
+  --secondary: #0d4f4a;
+  --secondary-foreground: #e8f6f4;
+  --muted: #043d3a;
+  --muted-foreground: #8ec8c2;
+  --accent: #2dd4bf;
+  --accent-foreground: #022c2a;
+  --destructive: #f87171;
+  --destructive-foreground: #022c2a;
+  --border: #0d4f4a;
+  --input: #0d4f4a;
+  --ring: #2dd4bf;
+  --radius: 0.5rem;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

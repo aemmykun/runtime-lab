@@ -12,7 +12,7 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
       <header className="border-b border-slate-800">
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-semibold">

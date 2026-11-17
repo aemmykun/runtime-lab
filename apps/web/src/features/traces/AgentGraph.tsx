@@ -7,15 +7,15 @@ import { useMemo } from 'react';
 export function buildGraph(trace: Trace): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  const style = (color: string) => ({ background: '#0f172a', color: '#e2e8f0', border: `1px solid ${color}`, fontSize: 11, width: 170 });
-  nodes.push({ id: 'prompt', position: { x: 0, y: 0 }, data: { label: 'Prompt' }, style: style('#64748b') });
+  const style = (color: string) => ({ background: 'var(--card)', color: 'var(--foreground)', border: `1px solid ${color}`, fontSize: 11, width: 170 });
+  nodes.push({ id: 'prompt', position: { x: 0, y: 0 }, data: { label: 'Prompt' }, style: style('var(--muted-foreground)') });
   let prev = 'prompt';
   let y = 0;
   let pendingTools: string[] = [];
   for (const s of trace.steps) {
     if (s.type === 'model') {
       y += 90;
-      nodes.push({ id: s.id, position: { x: 0, y }, data: { label: `${s.label}\n${Math.round(s.latencyMs)} ms` }, style: style(s.error ? '#ef4444' : '#38bdf8') });
+      nodes.push({ id: s.id, position: { x: 0, y }, data: { label: `${s.label}\n${Math.round(s.latencyMs)} ms` }, style: style(s.error ? '#ef4444' : 'var(--accent)') });
       const sources = pendingTools.length ? pendingTools : [prev];
       for (const src of sources) edges.push({ id: `${src}-${s.id}`, source: src, target: s.id, animated: false });
       pendingTools = [];

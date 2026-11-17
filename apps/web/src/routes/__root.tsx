@@ -83,7 +83,7 @@ function Doc({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-slate-950">
+      <body className="bg-background font-sans text-foreground">
         {children}
         <Scripts />
       </body>

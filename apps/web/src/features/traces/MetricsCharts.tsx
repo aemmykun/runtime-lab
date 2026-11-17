@@ -1,8 +1,8 @@
 import type { Trace } from '@runtime-lab/core';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const axis = { stroke: '#64748b', fontSize: 11 };
-const tooltip = { contentStyle: { background: '#0f172a', border: '1px solid #334155', fontSize: 12 } };
+const axis = { stroke: 'var(--muted-foreground)', fontSize: 11 };
+const tooltip = { contentStyle: { background: 'var(--card)', border: '1px solid var(--border)', fontSize: 12 } };
 
 export function MetricsCharts({ trace }: { trace: Trace }) {
   const latency = trace.steps.filter((s) => s.type !== 'system').map((s, i) => ({ name: `${i + 1}. ${s.type}`, ms: Math.round(s.latencyMs) }));
@@ -17,11 +17,11 @@ export function MetricsCharts({ trace }: { trace: Trace }) {
         <figcaption className="mb-1 text-xs text-slate-400">Latency per step (ms)</figcaption>
         <ResponsiveContainer>
           <BarChart data={latency}>
-            <CartesianGrid stroke="#1e293b" />
+            <CartesianGrid stroke="var(--border)" />
             <XAxis dataKey="name" {...axis} />
             <YAxis {...axis} />
             <Tooltip {...tooltip} />
-            <Bar dataKey="ms" fill="#38bdf8" />
+            <Bar dataKey="ms" fill="var(--accent)" />
           </BarChart>
         </ResponsiveContainer>
       </figure>
@@ -29,7 +29,7 @@ export function MetricsCharts({ trace }: { trace: Trace }) {
         <figcaption className="mb-1 text-xs text-slate-400">Tokens per model turn</figcaption>
         <ResponsiveContainer>
           <BarChart data={tokens}>
-            <CartesianGrid stroke="#1e293b" />
+            <CartesianGrid stroke="var(--border)" />
             <XAxis dataKey="name" {...axis} />
             <YAxis {...axis} />
             <Tooltip {...tooltip} />
@@ -44,7 +44,7 @@ export function MetricsCharts({ trace }: { trace: Trace }) {
         {priced && cost.length ? (
           <ResponsiveContainer>
             <LineChart data={cost}>
-              <CartesianGrid stroke="#1e293b" />
+              <CartesianGrid stroke="var(--border)" />
               <XAxis dataKey="name" {...axis} />
               <YAxis {...axis} />
               <Tooltip {...tooltip} />
