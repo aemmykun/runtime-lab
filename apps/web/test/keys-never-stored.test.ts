@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decodeShareFragment, encodeShareLink, exportRunJson } from '@runtime-lab/core';
-import { loadRememberedKeys, rememberKey, saveRun } from '~/db/repo';
+import { loadRememberedKeys, rememberKey, saveRun, updateRunNotes } from '~/db/repo';
 import { runDraft } from '~/services/trace-engine';
 import { currentSecrets, useSessionStore } from '~/stores/session-store';
 import { FAKE_KEY, dumpDb, freshDb, spyFetch } from './helpers';
@@ -33,6 +33,15 @@ describe('API keys never reach IndexedDB or share links', () => {
     useSessionStore.getState().setKey('anthropic', 'custom-key-without-known-prefix-999');
     const { SAMPLE_RUN } = await import('@runtime-lab/core');
     await saveRun({ ...SAMPLE_RUN, id: 'dirty', notes: 'custom-key-without-known-prefix-999' }, currentSecrets());
+    expect(JSON.stringify(await dumpDb(db))).not.toContain('custom-key-without-known-prefix-999');
+  });
+
+  it('saved run notes scrub in-memory keys', async () => {
+    const db = await freshDb();
+    useSessionStore.getState().setKey('anthropic', 'custom-key-without-known-prefix-999');
+    const { SAMPLE_RUN } = await import('@runtime-lab/core');
+    await saveRun({ ...SAMPLE_RUN, id: 'notes' });
+    await updateRunNotes('notes', 'A note with custom-key-without-known-prefix-999', currentSecrets());
     expect(JSON.stringify(await dumpDb(db))).not.toContain('custom-key-without-known-prefix-999');
   });
 

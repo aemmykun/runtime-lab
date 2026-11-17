@@ -1,4 +1,4 @@
-import { newId, redactDeep, type Experiment, type Project, type ProviderId, type Run } from '@runtime-lab/core';
+import { newId, redactDeep, redactString, type Experiment, type Project, type ProviderId, type Run } from '@runtime-lab/core';
 import { fromRecords, getDb, toRecords, type ApiKeyRecord, type ExperimentRecord, type HistoryRecord, type RunRecord } from './index';
 
 export const DEFAULT_PROJECT_ID = 'project_default';
@@ -52,8 +52,8 @@ export async function getRun(id: string): Promise<Run | undefined> {
   return t ? fromRecords(r, t) : undefined;
 }
 
-export async function updateRunNotes(id: string, notes: string) {
-  await getDb().runs.update(id, { notes });
+export async function updateRunNotes(id: string, notes: string, secrets: readonly string[] = []) {
+  await getDb().runs.update(id, { notes: redactString(notes, secrets) });
 }
 
 export async function deleteRun(id: string) {

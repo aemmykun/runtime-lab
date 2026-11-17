@@ -9,7 +9,7 @@ import { Tabs } from '~/components/ui/tabs';
 import { updateRunNotes } from '~/db/repo';
 import { ExportPanel } from '~/features/exports/ExportPanel';
 import { formatMs, formatTime } from '~/lib/utils';
-import { configToDraft, useSessionStore } from '~/stores/session-store';
+import { configToDraft, currentSecrets, useSessionStore } from '~/stores/session-store';
 import { AgentGraph } from './AgentGraph';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import { MetricsCharts } from './MetricsCharts';
@@ -65,7 +65,7 @@ function Notes({ run, editable }: { run: Run; editable: boolean }) {
       <Button
         size="sm"
         onClick={async () => {
-          await updateRunNotes(run.id, notes);
+          await updateRunNotes(run.id, notes, currentSecrets());
           await qc.invalidateQueries({ queryKey: ['runs'] });
           setSaved(true);
           setTimeout(() => setSaved(false), 1500);
