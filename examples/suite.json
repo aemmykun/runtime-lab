@@ -1,0 +1,46 @@
+{
+  "schema": "runtime-lab/suite@1",
+  "name": "support-agent-regression",
+  "defaults": {
+    "provider": "openai",
+    "model": "gpt-5-mini",
+    "system": "You are a support agent. Use tools to answer. Reply in one sentence.",
+    "maxTurns": 4,
+    "tools": [
+      {
+        "name": "get_order_status",
+        "description": "Look up the shipping status of an order by id.",
+        "parameters": {
+          "type": "object",
+          "properties": { "order_id": { "type": "string", "pattern": "^ORD-[0-9]{4}$" } },
+          "required": ["order_id"],
+          "additionalProperties": false
+        },
+        "mock": {
+          "type": "match",
+          "cases": [{ "when": { "order_id": "ORD-1042" }, "result": { "status": "shipped", "carrier": "AusPost", "eta": "2026-11-21" } }],
+          "default": { "status": "not_found" }
+        }
+      }
+    ]
+  },
+  "tests": [
+    {
+      "name": "looks up a known order",
+      "prompt": "Where is my order ORD-1042?",
+      "assertions": [
+        { "type": "tool-called", "name": "get_order_status" },
+        { "type": "contains", "value": "AusPost" },
+        { "type": "max-latency", "ms": 30000 }
+      ]
+    },
+    {
+      "name": "returns structured JSON when asked",
+      "prompt": "Return only JSON like {\"status\": \"...\"} for order ORD-9999. No prose, no code fences.",
+      "assertions": [
+        { "type": "json-schema", "schema": { "type": "object", "required": ["status"], "properties": { "status": { "type": "string" } } } },
+        { "type": "max-tokens", "tokens": 4000 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+import { fileURLToPath } from 'node:url';
+import viteReact from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [viteReact()],
+  resolve: {
+    alias: {
+      '~': fileURLToPath(new URL('./src', import.meta.url)),
+      '@runtime-lab/core': fileURLToPath(new URL('../../packages/core/src/index.ts', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    include: ['test/**/*.test.{ts,tsx}'],
+    setupFiles: ['fake-indexeddb/auto'],
+  },
+});

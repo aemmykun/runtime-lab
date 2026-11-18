@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "~/*": [
+        "./src/*"
+      ],
+      "@runtime-lab/core": [
+        "../../packages/core/src/index.ts"
+      ]
+    },
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src",
+    "test",
+    "scripts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

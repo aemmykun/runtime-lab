@@ -1,0 +1,46 @@
+# CI for Runtime Lab: lint, typecheck, tests, build and browser smoke test.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Build core (needed by the web postbuild step and the CLI)
+        run: npm run build -w @runtime-lab/core
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Browser smoke test of the built static site (uses the runner's Google Chrome)
+        run: npm run smoke
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+
+  # Optional: run a JSON test suite against a real provider and fail on regressions.
+  # Needs a repository secret (e.g. OPENAI_API_KEY). Never commit keys.
+  # suite:
+  #   runs-on: ubuntu-latest
+  #   needs: check
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: 24, cache: npm }
+  #     - run: npm ci
+  #     - run: npm run build -w @runtime-lab/core && npm run build -w runtime-lab
+  #     - run: npx --no-install runtime-lab run examples/suite.json --out suite-results.json
+  #       env:
+  #         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
