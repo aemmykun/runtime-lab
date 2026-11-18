@@ -38,7 +38,7 @@ describe('PriceTableEditor', () => {
     fireEvent.change(input, { target: { value: '0.5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save prices' }));
     await waitFor(() => expect(useSettingsStore.getState().priceTable.prices['openai:gpt-5-mini']?.inputPerMTok).toBe(0.5));
-    expect(screen.getByText('Saved.')).toBeTruthy();
+    expect(await screen.findByText('Saved.')).toBeTruthy();
     expect(useSettingsStore.getState().priceTable.prices['openai:gpt-5-mini']?.outputPerMTok).toBe(2);
     expect(useSettingsStore.getState().priceTable.checkedAt).toBe('2026-11-18');
 
