@@ -125,6 +125,14 @@ try {
   else console.log('ok  CSP blocks fetch to a non-provider host');
   await check('/about', /About the creator/);
   await check('/settings', /Price table/);
+  await page.getByRole('textbox', { name: 'Model for OpenAI gpt-5-mini' }).waitFor();
+  const miniIn = await page.getByRole('spinbutton', { name: 'Input $/1M tokens for OpenAI gpt-5-mini' }).inputValue();
+  const miniOut = await page.getByRole('spinbutton', { name: 'Output $/1M tokens for OpenAI gpt-5-mini' }).inputValue();
+  if (miniIn !== '0.25' || (miniOut !== '2' && miniOut !== '2.0')) problems.push(`default gpt-5-mini prices were ${miniIn} / ${miniOut}`);
+  await page.getByRole('button', { name: 'Save prices' }).waitFor();
+  await page.getByRole('button', { name: 'Add model' }).waitFor();
+  await page.getByRole('link', { name: 'OpenAI pricing page' }).waitFor();
+  console.log('ok  /settings price table renders gpt-5-mini 0.25 / 2');
 } finally {
   await browser.close();
   server.close();

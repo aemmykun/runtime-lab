@@ -200,6 +200,10 @@ export interface PriceEntry {
 
 export interface PriceTable {
   note: string;
+  /** Calendar date (YYYY-MM-DD) the default prices were checked, in the author's timezone. */
+  checkedAt?: string;
+  /** Official public pricing-page URLs, keyed by provider id. */
+  sources?: Partial<Record<ProviderId, string>>;
   /** Keyed by `${provider}:${model}` or bare model id. */
   prices: Record<string, PriceEntry>;
 }

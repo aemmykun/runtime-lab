@@ -1,59 +1,31 @@
-import { PROVIDERS, parsePriceTable } from '@runtime-lab/core';
+import { PROVIDERS } from '@runtime-lab/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
-import { Textarea } from '~/components/ui/input';
 import { clearAllData, ensureDefaultProject, forgetAllKeys, DEFAULT_PROJECT_ID } from '~/db/repo';
+import { PriceTableEditor } from '~/features/settings/PriceTableEditor';
 import { useHistory } from '~/lib/queries';
 import { formatTime } from '~/lib/utils';
 import { useSessionStore } from '~/stores/session-store';
-import { useSettingsStore } from '~/stores/settings-store';
 import { useTraceStore } from '~/stores/trace-store';
 
 function SettingsPage() {
-  const table = useSettingsStore((s) => s.priceTable);
-  const [text, setText] = useState(() => JSON.stringify(table, null, 2));
-  const [msg, setMsg] = useState<string>();
   const remembered = useSessionStore((s) => s.remembered);
   const running = useSessionStore((s) => s.running);
   const { data: history = [] } = useHistory();
   const qc = useQueryClient();
-  useEffect(() => setText(JSON.stringify(table, null, 2)), [table]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-4">
+    <div className="mx-auto max-w-5xl space-y-6 p-4">
       <h1 className="text-2xl font-bold">Settings</h1>
       <Card>
         <CardHeader>
           <CardTitle>Price table (estimates)</CardTitle>
-          <CardDescription>{table.note}</CardDescription>
+          <CardDescription>Edit the estimated cost of each model. Changes apply on this device after you save.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <Textarea rows={14} value={text} onChange={(e) => setText(e.target.value)} aria-label="Price table JSON" />
-          <p className="text-xs text-slate-500">
-            Keys are <code>provider:model</code> or a bare model id. Values are USD per 1M input/output tokens. Models not listed show cost as n/a.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={async () => {
-                try {
-                  await useSettingsStore.getState().setPriceTable(parsePriceTable(text));
-                  setMsg('Saved.');
-                } catch (e) {
-                  setMsg((e as Error).message);
-                }
-              }}
-            >
-              Save prices
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void useSettingsStore.getState().resetPriceTable()}>
-              Reset to defaults
-            </Button>
-            {msg && <span className="text-xs text-slate-400">{msg}</span>}
-          </div>
+        <CardContent>
+          <PriceTableEditor />
         </CardContent>
       </Card>
 

@@ -92,6 +92,8 @@ describe('no network calls except to provider hosts', () => {
       'https://github.com/aemmykun/runtime-lab',
       'https://github.com/sponsors/aemmykun',
       'https://tenantsage.org',
+      'https://developers.openai.com/api/docs/pricing',
+      'https://platform.claude.com/docs/en/about-claude/pricing',
       'http://www.w3.org/2000/svg',
     ];
     const files = [...walk(join(ROOT, 'apps/web/src')), ...walk(join(ROOT, 'packages/core/src'))];
