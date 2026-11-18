@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { ALLOWED_ORIGINS, BlockedRequestError } from '@runtime-lab/core';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyCsp, inlineScriptHashes } from '../scripts/postbuild';
+import { applyCsp, hoistThemeBoot, inlineScriptHashes } from '../scripts/postbuild';
 import { CSP_PLACEHOLDER, buildCsp } from '~/lib/csp';
 import { browserFetch, getBrowserAdapter } from '~/services/adapters';
 import { runDraft } from '~/services/trace-engine';
@@ -42,6 +42,13 @@ describe('Content-Security-Policy', () => {
     expect(out).toContain("'sha256-CihokcEcBW4atb/CW/XWsvWwbTjqwQlE9nj9ii5ww5M='");
     expect(out).not.toContain(CSP_PLACEHOLDER);
     expect(() => applyCsp('<html></html>')).toThrow(/placeholder/);
+  });
+  it('hoists the theme boot script to the start of head', () => {
+    const html = '<html><head><link rel="stylesheet" href="/styles.css"/><script src="/theme-boot.js"></script></head></html>';
+    const out = hoistThemeBoot(html);
+    expect(out.indexOf('<script src="/theme-boot.js"></script>')).toBeLessThan(out.indexOf('rel="stylesheet"'));
+    expect(out.match(/theme-boot\.js/g)).toHaveLength(1);
+    expect(() => hoistThemeBoot('<html><head></head></html>')).toThrow(/theme-boot/);
   });
 });
 

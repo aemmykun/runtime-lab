@@ -31,6 +31,21 @@ async function check(path: string, text: RegExp) {
 try {
   await check('/', /Your AI Worked\. But Do You Know Why\?/);
   await check('/sample', /This is an example trace/);
+  // Themes: Light Emerald and Lagoon, plus persistence via the header toggle.
+  await page.evaluate(() => localStorage.setItem('runtime-lab-theme', 'light'));
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByText(/This is an example trace/).first().waitFor({ timeout: 10_000 });
+  const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const lightTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+  if (lightBg !== 'rgb(236, 253, 245)' || lightTheme !== 'light') problems.push(`light theme: bg=${lightBg} data-theme=${lightTheme}`);
+  else console.log('ok  /sample Light Emerald theme');
+  await page.getByRole('radio', { name: 'Dark' }).click();
+  const darkBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const darkTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+  const storedTheme = await page.evaluate(() => localStorage.getItem('runtime-lab-theme'));
+  if (darkBg !== 'rgb(7, 59, 63)' || darkTheme !== 'dark' || storedTheme !== 'dark') {
+    problems.push(`dark theme: bg=${darkBg} data-theme=${darkTheme} stored=${storedTheme}`);
+  } else console.log('ok  /sample Lagoon theme + persistence');
   await page.getByRole('button', { name: 'Play demo' }).waitFor();
   await page.getByRole('link', { name: /Try this setup in the Lab \(needs your API key\)/ }).waitFor();
   await page.getByRole('tab', { name: 'Metrics' }).click();

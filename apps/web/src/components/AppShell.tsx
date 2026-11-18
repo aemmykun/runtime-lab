@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { FolderGit2, Heart, Microscope } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ThemeToggle } from '~/components/ThemeToggle';
 import { CREATOR, PRODUCT_NAME, REPO_URL, SPONSOR_URL } from '~/lib/config';
 
 const nav = [
@@ -14,7 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
       <header className="border-b border-slate-800">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-4 py-3">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-semibold">
             <Microscope className="size-5 text-sky-400" /> {PRODUCT_NAME}
           </Link>
@@ -26,6 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
+            <ThemeToggle />
             <a href={REPO_URL} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-slate-400 hover:text-slate-100">
               <FolderGit2 className="size-4" /> GitHub
             </a>

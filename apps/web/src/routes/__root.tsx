@@ -79,11 +79,13 @@ function RootComponent() {
 
 function Doc({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Classic blocking script: sets data-theme from localStorage / system before first paint. Same-origin, CSP script-src 'self'. */}
+        <script src="/theme-boot.js" />
         <HeadContent />
       </head>
-      <body className="bg-background font-sans text-foreground">
+      <body className="bg-background font-sans text-foreground" suppressHydrationWarning>
         {children}
         <Scripts />
       </body>

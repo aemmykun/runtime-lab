@@ -2,87 +2,324 @@
 @import '@fontsource-variable/inter/wght.css';
 
 /*
-  Dark emerald / sea-green theme and typography tokens.
+  Two themes, applied via CSS variables:
 
-  Surfaces stay in the #022c2a–#043d3a range. The slate scale is remapped to
-  sea-green neutrals so existing utilities (bg-slate-950, border-slate-800, …)
-  pick up the theme without per-component colour rewrites. Sky is remapped to
-  teal so accents (buttons, focus rings, the logo) match.
+  Light Emerald (light): background #ecfdf5, card #d1fae5, accent #059669,
+    foreground #064e3b, primary button fill #047857 with white label (AA).
+  Lagoon (dark): background #073b3f, card #0c5157, accent #2ee6c9,
+    foreground #e6fffb, primary button label #073b3f (AA).
 
-  Body text contrast on #022c2a (WCAG 2.2, relative luminance ≈ 0.019):
-    foreground #e8f6f4  ~15:1  AAA
-    slate-400  #8ec8c2  ~8.1:1 AAA
-    slate-500  #7ab5af  ~6.5:1 AA  (and ~5.3:1 on card #043d3a)
-  Primary button #14b8a6 on #022c2a text ~6:1 AA.
+  Tailwind colour utilities (slate, sky, and the status palettes) are wired to
+  these variables so existing bg-slate-*, text-amber-*, badge and error-box
+  classes stay readable in both modes. slate-800 is a filled chip; border-slate-800
+  / border-slate-700 are pointed at --border so chips and hairlines can differ.
 */
+
 @theme {
   --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
 
-  --color-background: #022c2a;
-  --color-foreground: #e8f6f4;
-  --color-card: #043d3a;
-  --color-card-foreground: #e8f6f4;
-  --color-popover: #043d3a;
-  --color-popover-foreground: #e8f6f4;
-  --color-primary: #14b8a6;
-  --color-primary-foreground: #022c2a;
-  --color-secondary: #0d4f4a;
-  --color-secondary-foreground: #e8f6f4;
-  --color-muted: #043d3a;
-  --color-muted-foreground: #8ec8c2;
-  --color-accent: #2dd4bf;
-  --color-accent-foreground: #022c2a;
-  --color-destructive: #f87171;
-  --color-destructive-foreground: #022c2a;
-  --color-border: #0d4f4a;
-  --color-input: #0d4f4a;
-  --color-ring: #2dd4bf;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  --color-slate-50: #f0fdfa;
-  --color-slate-100: #e8f6f4;
-  --color-slate-200: #cceeea;
-  --color-slate-300: #a8ddd7;
-  --color-slate-400: #8ec8c2;
-  --color-slate-500: #7ab5af;
-  --color-slate-600: #3d7a75;
-  --color-slate-700: #1a5550;
-  --color-slate-800: #0d4f4a;
-  --color-slate-900: #043d3a;
-  --color-slate-950: #022c2a;
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
 
-  --color-sky-300: #5eead4;
-  --color-sky-400: #2dd4bf;
-  --color-sky-500: #14b8a6;
-  --color-sky-700: #0f766e;
-  --color-sky-800: #115e59;
-  --color-sky-950: #042f2e;
+  --color-sky-300: var(--sky-300);
+  --color-sky-400: var(--sky-400);
+  --color-sky-500: var(--sky-500);
+  --color-sky-700: var(--sky-700);
+  --color-sky-800: var(--sky-800);
+  --color-sky-950: var(--sky-950);
+
+  --color-amber-200: var(--amber-200);
+  --color-amber-300: var(--amber-300);
+  --color-amber-400: var(--amber-400);
+  --color-amber-800: var(--amber-800);
+  --color-amber-900: var(--amber-900);
+  --color-amber-950: var(--amber-950);
+
+  --color-red-200: var(--red-200);
+  --color-red-300: var(--red-300);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+  --color-red-800: var(--red-800);
+  --color-red-900: var(--red-900);
+  --color-red-950: var(--red-950);
+
+  --color-emerald-200: var(--emerald-200);
+  --color-emerald-300: var(--emerald-300);
+  --color-emerald-400: var(--emerald-400);
+  --color-emerald-800: var(--emerald-800);
+  --color-emerald-900: var(--emerald-900);
+  --color-emerald-950: var(--emerald-950);
+
+  --color-violet-300: var(--violet-300);
+  --color-violet-400: var(--violet-400);
+  --color-violet-800: var(--violet-800);
+  --color-violet-950: var(--violet-950);
+
+  --color-pink-400: var(--pink-400);
 }
 
-:root {
-  --background: #022c2a;
-  --foreground: #e8f6f4;
-  --card: #043d3a;
-  --card-foreground: #e8f6f4;
-  --popover: #043d3a;
-  --popover-foreground: #e8f6f4;
-  --primary: #14b8a6;
-  --primary-foreground: #022c2a;
-  --secondary: #0d4f4a;
-  --secondary-foreground: #e8f6f4;
-  --muted: #043d3a;
-  --muted-foreground: #8ec8c2;
-  --accent: #2dd4bf;
-  --accent-foreground: #022c2a;
-  --destructive: #f87171;
-  --destructive-foreground: #022c2a;
-  --border: #0d4f4a;
-  --input: #0d4f4a;
-  --ring: #2dd4bf;
+/* Light Emerald — default, and when the user or boot script selects light. */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --background: #ecfdf5;
+  --foreground: #064e3b;
+  --card: #d1fae5;
+  --card-foreground: #064e3b;
+  --popover: #d1fae5;
+  --popover-foreground: #064e3b;
+  /* #047857 (emerald-700) so white button text meets 4.5:1; accent swatch stays #059669. */
+  --primary: #047857;
+  --primary-foreground: #ffffff;
+  --secondary: #a7f3d0;
+  --secondary-foreground: #064e3b;
+  --muted: #d1fae5;
+  --muted-foreground: #0f766e;
+  --accent: #059669;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #0d8a6a;
+  --input: #0d8a6a;
+  --ring: #059669;
   --radius: 0.5rem;
+
+  --slate-50: #022c22;
+  --slate-100: #064e3b;
+  --slate-200: #065f46;
+  --slate-300: #0f766e;
+  --slate-400: #0f766e;
+  --slate-500: #115e59;
+  --slate-600: #14786c;
+  --slate-700: #6ee7b7;
+  --slate-800: #a7f3d0;
+  --slate-900: #d1fae5;
+  --slate-950: #ecfdf5;
+
+  --sky-300: #047857;
+  --sky-400: #047857;
+  --sky-500: #047857;
+  --sky-700: #065f46;
+  --sky-800: #0f766e;
+  --sky-950: #a7f3d0;
+
+  --amber-200: #78350f;
+  --amber-300: #92400e;
+  --amber-400: #b45309;
+  --amber-800: #d97706;
+  --amber-900: #b45309;
+  --amber-950: #fef3c7;
+
+  --red-200: #7f1d1d;
+  --red-300: #991b1b;
+  --red-400: #b91c1c;
+  --red-500: #b91c1c;
+  --red-600: #dc2626;
+  --red-700: #991b1b;
+  --red-800: #b91c1c;
+  --red-900: #991b1b;
+  --red-950: #fee2e2;
+
+  --emerald-200: #065f46;
+  --emerald-300: #047857;
+  --emerald-400: #047857;
+  --emerald-800: #059669;
+  --emerald-900: #047857;
+  --emerald-950: #a7f3d0;
+
+  --violet-300: #5b21b6;
+  --violet-400: #6d28d9;
+  --violet-800: #7c3aed;
+  --violet-950: #ede9fe;
+
+  --pink-400: #9d174d;
+}
+
+/* Lagoon — system dark before the boot script, and when dark is selected. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --background: #073b3f;
+    --foreground: #e6fffb;
+    --card: #0c5157;
+    --card-foreground: #e6fffb;
+    --popover: #0c5157;
+    --popover-foreground: #e6fffb;
+    --primary: #2ee6c9;
+    --primary-foreground: #073b3f;
+    --secondary: #0e5a61;
+    --secondary-foreground: #e6fffb;
+    --muted: #0c5157;
+    --muted-foreground: #8fd9d0;
+    --accent: #2ee6c9;
+    --accent-foreground: #073b3f;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #2599a1;
+    --input: #2599a1;
+    --ring: #2ee6c9;
+    --radius: 0.5rem;
+
+    --slate-50: #f0fffd;
+    --slate-100: #e6fffb;
+    --slate-200: #d4f7f2;
+    --slate-300: #b6ebe4;
+    --slate-400: #8fd9d0;
+    --slate-500: #78c9c0;
+    --slate-600: #4aa39b;
+    --slate-700: #1a6b72;
+    --slate-800: #0e5a61;
+    --slate-900: #0c5157;
+    --slate-950: #073b3f;
+
+    --sky-300: #5eeed8;
+    --sky-400: #2ee6c9;
+    --sky-500: #2ee6c9;
+    --sky-700: #1aa58f;
+    --sky-800: #0e7a74;
+    --sky-950: #0a3f43;
+
+    --amber-200: #fde68a;
+    --amber-300: #fcd34d;
+    --amber-400: #fbbf24;
+    --amber-800: #92400e;
+    --amber-900: #b45309;
+    --amber-950: #422006;
+
+    --red-200: #fecaca;
+    --red-300: #fca5a5;
+    --red-400: #f87171;
+    --red-500: #b91c1c;
+    --red-600: #dc2626;
+    --red-700: #991b1b;
+    --red-800: #991b1b;
+    --red-900: #7f1d1d;
+    --red-950: #450a0a;
+
+    --emerald-200: #a7f3d0;
+    --emerald-300: #6ee7b7;
+    --emerald-400: #34d399;
+    --emerald-800: #047857;
+    --emerald-900: #065f46;
+    --emerald-950: #022c22;
+
+    --violet-300: #c4b5fd;
+    --violet-400: #a78bfa;
+    --violet-800: #5b21b6;
+    --violet-950: #2e1065;
+
+    --pink-400: #f472b6;
+  }
+}
+
+.dark,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #073b3f;
+  --foreground: #e6fffb;
+  --card: #0c5157;
+  --card-foreground: #e6fffb;
+  --popover: #0c5157;
+  --popover-foreground: #e6fffb;
+  --primary: #2ee6c9;
+  --primary-foreground: #073b3f;
+  --secondary: #0e5a61;
+  --secondary-foreground: #e6fffb;
+  --muted: #0c5157;
+  --muted-foreground: #8fd9d0;
+  --accent: #2ee6c9;
+  --accent-foreground: #073b3f;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #2599a1;
+  --input: #2599a1;
+  --ring: #2ee6c9;
+  --radius: 0.5rem;
+
+  --slate-50: #f0fffd;
+  --slate-100: #e6fffb;
+  --slate-200: #d4f7f2;
+  --slate-300: #b6ebe4;
+  --slate-400: #8fd9d0;
+  --slate-500: #78c9c0;
+  --slate-600: #4aa39b;
+  --slate-700: #1a6b72;
+  --slate-800: #0e5a61;
+  --slate-900: #0c5157;
+  --slate-950: #073b3f;
+
+  --sky-300: #5eeed8;
+  --sky-400: #2ee6c9;
+  --sky-500: #2ee6c9;
+  --sky-700: #1aa58f;
+  --sky-800: #0e7a74;
+  --sky-950: #0a3f43;
+
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-800: #92400e;
+  --amber-900: #b45309;
+  --amber-950: #422006;
+
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #b91c1c;
+  --red-600: #dc2626;
+  --red-700: #991b1b;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+  --red-950: #450a0a;
+
+  --emerald-200: #a7f3d0;
+  --emerald-300: #6ee7b7;
+  --emerald-400: #34d399;
+  --emerald-800: #047857;
+  --emerald-900: #065f46;
+  --emerald-950: #022c22;
+
+  --violet-300: #c4b5fd;
+  --violet-400: #a78bfa;
+  --violet-800: #5b21b6;
+  --violet-950: #2e1065;
+
+  --pink-400: #f472b6;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 body {
@@ -92,4 +329,15 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+  slate-800 is a filled chip (secondary / selected row). Hairline borders use
+  the semantic --border token so they stay 3:1 on both themes.
+*/
+@layer utilities {
+  .border-slate-800,
+  .border-slate-700 {
+    border-color: var(--border);
+  }
 }

@@ -9,7 +9,7 @@ export function Tabs<T extends string>({ value, onChange, items, className }: { 
           role="tab"
           aria-selected={value === it.value}
           onClick={() => onChange(it.value)}
-          className={cn('rounded px-3 py-1 text-xs font-medium', value === it.value ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200')}
+          className={cn('rounded px-3 py-1 text-xs font-medium', value === it.value ? 'bg-secondary text-foreground' : 'text-slate-400 hover:text-slate-200')}
         >
           {it.label}
         </button>
