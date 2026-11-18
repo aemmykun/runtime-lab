@@ -265,11 +265,36 @@ history out of the server: [docs/SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md).
 
 ## Deploying
 
-`apps/web/dist/client` is a plain static site. Any static host works.
-Configure an SPA fallback so unknown paths serve `index.html` (a Netlify /
-Cloudflare Pages `_redirects` file is included). Recommended response headers:
-the same CSP as the meta tag plus `frame-ancestors 'none'`,
-`X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+The intended host is [Vercel](https://vercel.com). `apps/web/dist/client` is a
+plain static SPA. [vercel.json](vercel.json) at the **repository root** sets
+the monorepo build (`@runtime-lab/core` then `@runtime-lab/web`), the output
+directory, an SPA rewrite of all missing routes to `/index.html`, security
+headers, and long-lived cache headers for hashed files under `/assets/`.
+
+The Content-Security-Policy stays in the HTML `<meta>` tag: the postbuild step
+hashes the framework's inline scripts, and those hashes change every build, so
+they cannot be hard-coded in `vercel.json`. The Vercel config adds the other
+security headers, including `Content-Security-Policy: frame-ancestors 'none'`
+(that directive cannot be set from a meta tag), `X-Frame-Options: DENY`,
+`X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a
+locked-down `Permissions-Policy`.
+
+### One-time Vercel setup
+
+This is not done by the repository or by this PR. In the Vercel dashboard:
+
+1. Open [vercel.com/new](https://vercel.com/new) and import the
+   `aemmykun/runtime-lab` GitHub repository.
+2. Leave the **Root Directory** as the repository root (`.`). Do not set it to
+   `apps/web` — this is an npm workspace, and `vercel.json` already points the
+   output at `apps/web/dist/client`.
+3. Set the **Production Branch** to `main`.
+4. The first production deployment will run when `main` is updated (after this
+   PR is merged). Once the project is connected, Vercel may also build preview
+   deployments for pull requests.
+
+A Netlify / Cloudflare Pages `_redirects` file remains in `apps/web/public`
+for other static hosts, but Vercel is the intended deployment.
 
 Nothing is deployed by this PR.
 
